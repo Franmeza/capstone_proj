@@ -1,0 +1,17 @@
+# Example dataset configuration for YOLO training
+# This is a placeholder configuration file
+
+# Training and validation data paths
+train: ./data/images/train
+val: ./data/images/val
+
+# Number of classes
+nc: 1
+
+# Class names
+names:
+  - rust
+
+# Optional: Test data path
+# test: ./data/images/test
+
