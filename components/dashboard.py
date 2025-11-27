@@ -221,29 +221,48 @@ def render_dashboard():
     
     st.markdown("---")
     
-    # Sample predictions preview
-    st.subheader("🖼️ Sample Predictions")
+    # Recent predictions section
+    st.subheader("🖼️ Recent Predictions")
     
-    samples_dir = Path("data/samples")
-    if samples_dir.exists():
-        sample_files = list(samples_dir.glob("*.jpg")) + list(samples_dir.glob("*.png"))
+    predict_dir = Path("runs/predict")
+    
+    # Show recent prediction outputs
+    if predict_dir.exists():
+        recent_predictions = sorted(
+            [f for f in predict_dir.glob("processed_*") if f.suffix.lower() in ['.jpg', '.jpeg', '.png', '.webp', '.mp4', '.avi', '.mov']],
+            key=lambda x: x.stat().st_mtime, 
+            reverse=True
+        )[:6]
         
-        if sample_files:
-            cols = st.columns(min(3, len(sample_files)))
+        if recent_predictions:
+            cols = st.columns(min(3, len(recent_predictions)))
             
-            for idx, sample_file in enumerate(sample_files[:3]):
-                with cols[idx % 3]:
+            for idx, pred_file in enumerate(recent_predictions[:6]):
+                col_idx = idx % 3
+                
+                # Start new row after 3 items
+                if idx == 3:
+                    cols = st.columns(min(3, len(recent_predictions) - 3))
+                
+                with cols[col_idx]:
                     try:
-                        img = Image.open(sample_file)
-                        st.image(img, caption=sample_file.name, width='stretch')
-                        
-                        # Dummy corrosion statistics
-                        st.caption(f"Corroded Area: {np.random.randint(15, 45)}%")
-                        st.caption(f"Confidence: {np.random.uniform(0.85, 0.98):.2f}")
+                        if pred_file.suffix.lower() in ['.jpg', '.jpeg', '.png', '.webp']:
+                            img = Image.open(pred_file)
+                            st.image(img, caption=pred_file.name, width='stretch')
+                            
+                            # Show file modification time
+                            mod_time = pred_file.stat().st_mtime
+                            from datetime import datetime
+                            mod_datetime = datetime.fromtimestamp(mod_time)
+                            st.caption(f"📅 {mod_datetime.strftime('%Y-%m-%d %H:%M')}")
+                            
+                        elif pred_file.suffix.lower() in ['.mp4', '.avi', '.mov']:
+                            st.video(str(pred_file))
+                            st.caption(pred_file.name)
                     except Exception as e:
-                        st.error(f"Error loading {sample_file.name}: {str(e)}")
+                        st.error(f"Error loading {pred_file.name}")
         else:
-            st.info("No sample images found in data/samples/")
+            st.info("No predictions yet. Go to the **Prediction** page to analyze images or videos.")
     else:
-        st.info("Sample directory not found. Add images to data/samples/ for preview.")
+        st.info("No predictions yet. Go to the **Prediction** page to analyze images or videos.")
 
